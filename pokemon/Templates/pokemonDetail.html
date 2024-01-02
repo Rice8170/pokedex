@@ -1,0 +1,133 @@
+{% extends 'Layouts/base.html' %}
+
+{% block content %}
+
+    {% load static %}
+    
+    <main class="container">
+        <h1 class="text-center mt-3">Detalles Pokemon</h1>
+        <div class="row justify-content-center mt-3">
+            {% if messages %}
+               
+                {% for message in messages %}
+                    
+                    
+                    <script>
+                        Swal.fire({
+                            icon: '{{message.tags}}',
+                            title: '{{message}}',
+                            
+                        })
+                    </script>
+                    
+                {% endfor %}
+               
+            {% endif %}
+            <div class="col-5">
+                <div class="card text-bg-dark shadow-lg rounded-5">
+                    {% if pokemon.pokemonImage %}
+                        <img src="{{pokemon.pokemonImage.url}}" class="card-img-top" alt="{{pokemon.name}}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h2 class="card-title text-center">{{pokemon.name}}</h2>
+                        <div class="row bg-secondary rounded-4 mx-2">
+                            <div class="col-6">
+                                <ul>
+                                    <li class="list-inline">
+                                        <span class="fw-bold fs-5">Altura: </span> <br>
+                                        <span>{{pokemon.height}}</span>
+                                    </li>
+                                    <li class="list-unstyled mt-2">
+                                        <span class="fw-bold fs-5">Peso:</span> <br>
+                                        <span>{{pokemon.weight}}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-6">
+                                <ul>
+                                    <li class="list-unstyled">
+                                        <span class="fw-bold fs-5">Categoria: </span> <br>
+                                        <span> 
+                                            {% for category in pokemon.category.all %}
+                                                
+                                                {{category}}{% if not forloop.last %}-{% endif %}
+                                            {% endfor %}    
+                                        </span>
+                                    </li>
+                                    <li class="list-unstyled">
+                                        <span class="fw-bold fs-5">Fecha de captura: </span> <br>
+                                        <span> {{pokemon.dateCapture}} </span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <a href="{% url 'pokemonEdit' pokemon.id %}" class="btn btn-outline-warning mt-4" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                                    <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                                    <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+                                </svg>
+                                Actualizar
+                            </a>
+                            <button onClick="preDelete('{{pokemon.id}}')" class="btn btn-outline-danger mt-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
+                                    <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1h-.995a.59.59 0 0 0-.01 0zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47ZM8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
+                                </svg> 
+                                Eliminar
+                            </button>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+  
+        <!-- Modal -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog  modal-dialog-centered">
+                <div class="modal-content text-bg-dark">
+                    <div class="modal-header" data-bs-theme="dark">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">Editar pokemon</h1>
+                        <button type="button" class="btn-close"  data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="{% url 'pokemonEdit' pokemon.id %}" method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+
+                            <div class="row">
+                                {% for field in form %}
+                                    {% if not forloop.first %} 
+                                        <div class="col-12 mt-2">   
+                                    {% else %}
+                                        <div class="col-12 "> 
+                                    {% endif %}
+                                        <label for="{{field.id_for_label}}" class="form-label">{{field.label}}:</label>
+                                        {{field}}
+                                        {% for error in field.errors %}
+                                            <p class="text-danger">{{error}}</p>
+                                        {% endfor %}
+                                        
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-outline-warning">Editar</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+        
+    </main>
+
+    
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'JS/pokemonDetail.js' %}"></script>
+    <script src="{% static 'JS/pokemonDelete.js' %}"></script>
+{% endblock %}

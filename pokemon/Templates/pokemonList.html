@@ -1,0 +1,73 @@
+{% extends 'Layouts/base.html' %}
+
+{% block content %}
+    
+    {% load static %}
+    
+    <main class="container-fluid mt-5">
+        <h1 class="text-center">Pokemons</h1>
+
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <script>
+                        Swal.fire({
+                            icon: '{{message.tags}}',
+                            title: '{{message}}',
+                            
+                        })
+                    </script>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        <table class="table table-dark  table-hover" id="tabPokemonList">
+            <thead>
+                <tr>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">Peso</th>
+                    <th scope="col">Altura</th>
+                    <th scope="col">Color</th>
+                    <th scope="col">Fecha de captura</th>
+                    <th scope="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pokemon in pokemons %}
+                    
+                    <tr>
+                        <td>{{pokemon.name}}</td>
+                        <td>
+                            {% for category in pokemon.category.all %}
+                                {{category}}
+                            {% endfor %}
+                        </td>
+                        <td>{{pokemon.weight}}</td>
+                        <td>{{pokemon.height}}</td>
+                        <td>{{pokemon.get_color_display}}</td>
+                        <td>{{pokemon.dateCapture}}</td>
+                        <td>
+                            <a  href="{% url 'pokemonDetail' pokemon.id%}" class="btn btn-outline-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                                </svg>
+                            </a>
+
+                        </td>
+                    </tr>
+
+                {% endfor %}
+                
+            </tbody>
+        </table>
+
+        
+    </main>
+    
+    
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'JS/pokemonList.js' %}"></script>
+
+{% endblock %}

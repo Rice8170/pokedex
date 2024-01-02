@@ -1,0 +1,53 @@
+{% extends 'Layouts/base.html' %}
+
+{% block content %}
+    <main class="container-fluid">
+        <h1 class="text-center mt-5">Pokemons</h1>
+        <div class="row row-cols-1 row-cols-md-4 g-4">
+            {% for pokemon in object_list %}
+                <div class="col">
+                    <div class="card h-100 text-bg-dark shadow-lg rounded-5">
+                        {% if pokemon.pokemonImage %}
+                            <img src="{{pokemon.pokemonImage.url}}" class="card-img-top" alt="{{pokemon.name}}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h2 class="card-title text-center">{{pokemon.name}}</h2>
+                            <div class="row bg-secondary rounded-4 mx-2">
+                                <div class="col-4">
+                                    <ul>
+                                        <li class="list-inline">
+                                            <span class="fw-bold fs-5">Altura: </span> <br>
+                                            <span>{{pokemon.height}}</span>
+                                        </li>
+                                        <li class="list-unstyled mt-2">
+                                            <span class="fw-bold fs-5">Peso:</span> <br>
+                                            <span>{{pokemon.weight}}</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="col-7">
+                                    <ul>
+                                        <li class="list-unstyled">
+                                            <span class="fw-bold fs-5">Categoria: </span> <br>
+                                            <span>
+                                                {% for category in pokemon.category.all %}
+                                                
+                                                    {{category}}{% if not forloop.last %} -{% endif %}
+                                                {% endfor %}  
+                                            </span>
+                                        </li>
+                                        <li class="list-unstyled">
+                                            <span class="fw-bold fs-5">Fecha de captura: </span> <br>
+                                            <span> {{pokemon.dateCapture}} </span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+          </div>
+    </main>
+{% endblock %}

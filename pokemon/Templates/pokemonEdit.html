@@ -1,0 +1,29 @@
+{% extends 'Layouts/base.html' %}
+
+{% block content %}
+
+    <mian class="container">
+        <div class="row justify-content-center mt-4">
+            <div class="col-4">
+                <div class="card text-bg-dark shadow-lg rounded-4">
+                    <div class="card-body">
+                        <h1 class="card-title text-center">Editar pokemon</h1>
+                        {{error}}
+                        
+                        <form action="{% url 'pokemonEdit' %}" method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+        
+                            {{form}}
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-outline-warning">Actualizar</button>
+                            </div>
+                        </form>
+                        
+                    </div>
+                </div>
+                
+                
+            </div>
+        </div>
+    </mian>
+{% endblock %}
