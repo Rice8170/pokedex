@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from pokemon import views
-from pokemon.views import Index,Signup
+from pokemon.views import Index,Signup,Signin
 from django.conf import settings
 
 urlpatterns = [
@@ -25,7 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('signup/', Signup.as_view(), name='signup'),
     path('logout/',views.signout, name='logout'),
-    path('signin/',views.signin, name='signin'),
+    path('signin/',Signin.as_view(), name='signin'),
     path('pokemon/',include('pokemon.urls'))
 ]
 

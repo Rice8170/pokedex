@@ -6,6 +6,7 @@ from django.urls import reverse_lazy
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist,ValidationError
@@ -26,26 +27,52 @@ class Index(ListView):
 
  
 
-# class Signup(FormView):
-#     template_name = "signup.html"
-#     form_class = UserCreationForm
-#     success_url = reverse_lazy('pokemonList')
+class Signin(FormView):
+    template_name = "signin.html"
+    form_class = AuthenticationForm
+    success_url = reverse_lazy('pokemonList')
 
-#     def dispatch(self, request, *args, **kwargs):
-#         if request.user.is_authenticated:
-#             return self.get_success_url()
-#         else:
-#             return super(Signup,self).dispatch(request, *args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return self.get_success_url()
+        else:
+            return super(Signin,self).dispatch(request, *args, **kwargs)
     
+    def get_form(self, form_class=None):
+        form = super(Signin, self).get_form()
 
-#     def form_valid(self, form):
-#         login(self.request, form.get_user())
-#         return super(Signup, self).form_valid(form)
+        form.fields['username'].widget = forms.TextInput(attrs={'class':'form-control', 'placeholder':'Ingresa usuario'})
+        form.fields['password'].widget = forms.PasswordInput(attrs={'class':'form-control', 'placeholder':'Ingresa contraseña'})
     
+        form.fields['username'].label = 'Usuario'
+        form.fields['password'].label = 'Contraseña'
+        return form
+    
+    def form_valid(self, form):
+        
+        user = authenticate(self.request,username=self.request.POST['username'],password=self.request.POST['password'])
+        
+        if user is None:  
+            context = self.get_context_data()
+            context['error'] = {
+                'title': 'Error de autenticación',
+                'text': 'Usuario o contraseña incorrectos',
+                'icon': 'error',
+                'confirmButtonText': 'OK'
+            }
+            return self.render_to_response(context)
+        else:
+            login(self.request,user)
+            return  redirect(self.success_url)
+    def form_invalid(self, form):
+        
+        return super().form_invalid(form)
+
+
 class Signup(CreateView):
     template_name = "signup.html"
     form_class = UserCreationForm
-    success_url = reverse_lazy('pokemonList')
+    success_url = reverse_lazy()
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -68,66 +95,11 @@ class Signup(CreateView):
 
     def form_valid(self, form):
         print("Form Valido")
-        login(self.request, form.get_user())
-        form.save()
-        return super().form_valid(form)
+        self.object = form.save()
+        print(self.object)
+        login(self.request, self.object)
+        return super(Signup,self).form_valid(form)
     
-    def form_invalid(self, form):
-        context = self.get_context_data()
-        context['form'] = form
-        return render(self.request,self.template_name,context)
-    
-
-# def signup(request):
-#     if request.method == 'GET':
-#         return render(request, 'signup.html',{
-#             'form': UserCreationForm
-#         })
-#     else:
-#         if request.POST['password1'] == request.POST['password2']:
-#             try:
-#                 user = User.objects.create_user(username=request.POST['username'], password=request.POST['password1'])
-#                 user.save()
-#                 login(request,user)
-#                 return redirect('pokemonList')
-#             except IntegrityError:
-#                 return render(request, 'signup.html',{
-#                 'form': UserCreationForm,
-#                 'error':{
-#                     'title': 'Error de registro',
-#                     'text': 'El usuario ya existe',
-#                     'icon': 'error',
-#                     'confirmButtonText': 'OK'
-#                 }
-#             })
-#         else:
-#             return render(request, 'signup.html',{
-#                 'form': UserCreationForm,
-#                 'error': 'La contraseña no coincide'
-#             })
-
-def signin(request):
-    if request.method == 'GET':
-
-        return render(request,'signin.html', {
-            'form': AuthenticationForm
-        })
-    else:
-        user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
-
-        if user is None:
-            return render(request,'signin.html',{
-                'error':{
-                    'title': 'Error de autenticación',
-                    'text': 'Usuario o contraseña incorrectos',
-                    'icon': 'error',
-                    'confirmButtonText': 'OK'
-                }
-            })
-        else:
-            login(request, user)
-            return redirect('pokemonList')
-
 
 @login_required
 def signout(request):
@@ -142,56 +114,73 @@ def pokemonList(request):
         'pokemons':pokemons,  
     })
 
-@login_required
-def pokemonCreate(request):
-    if request.method == 'GET':
-        return render(request,'pokemonCreate.html',{
-            'form':PokemonFrom
-        })
-    else:
-        # try:
-        post = request.POST
-        pokemon = Pokemon(user=request.user)
-        
-        form = PokemonFrom(post,request.FILES, instance=pokemon)
-        
-        if form.is_valid():
-            pokemon = form.save(commit=False)
-            pokemon.full_clean()
-            pokemon.save()
-            pokemon.category.set(post.getlist('category'))            
-            
-            return render(request,'pokemonCreate.html',{
-                'form':PokemonFrom,
-                "message":{
-                    "title":"Nuvo pokemon consegido",
-                    "text":"{} ha sido agregado a la colección". format(pokemon.name),
-                    "icon":"success",
-                    "confirmButtonText":"Ok"
-                }
-            })
-        else:
-            if "__all__" in form.errors:
-                print(True)
-                return render(request,'pokemonCreate.html',{
-                    'form': PokemonFrom(),
-                    "message":{
-                        "title":"Pokemon no capturado",
-                        "text":"Ya tienes el pokemon en tu coleccion" ,
-                        "icon":"error",
-                        "confirmButtonText":"Ok"
-                    }
-                })
+class PokemonCreate(CreateView):
+    template_name = "pokemonCreate.html"
+    form_class = PokemonFrom
+    success_url = reverse_lazy('pokemonList')
 
-            return render(request,'pokemonCreate.html',{
-                'form':form
-            })
-        # except ValidationError as e:
-        #     print('exepcion')
-        #     return render(request,'pokemonCreate.html',{
-        #         'form':form,
-        #         'error':e.message_dict
-        #     })
+    def form_valid(self, form):
+        print("Form Valido")
+        print(self.request.user)
+        form.instance.user = self.request.user
+        self.object = form.save()
+        
+        self.object.category.set(self.request.POST)
+        print(self.object)
+        
+        return super(Signup,self).form_valid(form)
+    
+
+# @login_required
+# def pokemonCreate(request):
+#     if request.method == 'GET':
+#         return render(request,'pokemonCreate.html',{
+#             'form':PokemonFrom
+#         })
+#     else:
+#         # try:
+#         post = request.POST
+#         pokemon = Pokemon(user=request.user)
+        
+#         form = PokemonFrom(post,request.FILES, instance=pokemon)
+        
+#         if form.is_valid():
+#             pokemon = form.save(commit=False)
+#             pokemon.full_clean()
+#             pokemon.save()
+#             pokemon.category.set(post.getlist('category'))            
+            
+#             return render(request,'pokemonCreate.html',{
+#                 'form':PokemonFrom,
+#                 "message":{
+#                     "title":"Nuvo pokemon consegido",
+#                     "text":"{} ha sido agregado a la colección". format(pokemon.name),
+#                     "icon":"success",
+#                     "confirmButtonText":"Ok"
+#                 }
+#             })
+#         else:
+#             if "__all__" in form.errors:
+#                 print(True)
+#                 return render(request,'pokemonCreate.html',{
+#                     'form': PokemonFrom(),
+#                     "message":{
+#                         "title":"Pokemon no capturado",
+#                         "text":"Ya tienes el pokemon en tu coleccion" ,
+#                         "icon":"error",
+#                         "confirmButtonText":"Ok"
+#                     }
+#                 })
+
+#             return render(request,'pokemonCreate.html',{
+#                 'form':form
+#             })
+#         # except ValidationError as e:
+#         #     print('exepcion')
+#         #     return render(request,'pokemonCreate.html',{
+#         #         'form':form,
+#         #         'error':e.message_dict
+#         #     })
     
         
     
