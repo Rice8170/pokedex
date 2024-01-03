@@ -125,11 +125,15 @@ class PokemonCreate(CreateView):
         form.instance.user = self.request.user
         self.object = form.save()
         
-        self.object.category.set(self.request.POST)
+        self.object.category.set(self.request.POST.getlist('category'))
         print(self.object)
+        messages.success(self.request, "Pokemon capturado")
         
-        return super(Signup,self).form_valid(form)
-    
+        return super().form_valid(form)
+    def form_invalid(self, form):
+        print(form.errors)
+
+        return super(PokemonCreate,self).form_invalid(form)    
 
 # @login_required
 # def pokemonCreate(request):

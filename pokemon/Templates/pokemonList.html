@@ -64,6 +64,19 @@
         
     </main>
     
+    {% if messages %}
+        {% for message in messages %}
+            <script>
+                Swal.fire({
+                    title: "{{message}}",
+                    text: "",
+                    icon: "{{message.tags}}",
+                    confirmButtonText: "OK"
+                })
+            </script>
+             
+        {% endfor %}
+    {% endif %}
     
 {% endblock %}
 
