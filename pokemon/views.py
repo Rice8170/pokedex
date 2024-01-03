@@ -6,6 +6,7 @@ from django.urls import reverse_lazy
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -27,16 +28,20 @@ class Index(ListView):
 
  
 
-class Signin(FormView):
+class Signin(LoginView):
     template_name = "signin.html"
     form_class = AuthenticationForm
-    success_url = reverse_lazy('pokemonList')
+    
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             return self.get_success_url()
         else:
             return super(Signin,self).dispatch(request, *args, **kwargs)
+    
+    def get_redirect_url(self) -> str:
+        
+        return reverse_lazy('pokemonList')
     
     def get_form(self, form_class=None):
         form = super(Signin, self).get_form()
@@ -49,24 +54,13 @@ class Signin(FormView):
         return form
     
     def form_valid(self, form):
+        print(self.request.get_full_path)
         
         user = authenticate(self.request,username=self.request.POST['username'],password=self.request.POST['password'])
         
-        if user is None:  
-            context = self.get_context_data()
-            context['error'] = {
-                'title': 'Error de autenticación',
-                'text': 'Usuario o contraseña incorrectos',
-                'icon': 'error',
-                'confirmButtonText': 'OK'
-            }
-            return self.render_to_response(context)
-        else:
-            login(self.request,user)
-            return  redirect(self.success_url)
-    def form_invalid(self, form):
-        
-        return super().form_invalid(form)
+        login(self.request,user)
+        return super().form_valid(form)
+    
 
 
 class Signup(CreateView):
@@ -114,10 +108,13 @@ def pokemonList(request):
         'pokemons':pokemons,  
     })
 
-class PokemonCreate(CreateView):
+
+class PokemonCreate(LoginRequiredMixin, CreateView):
     template_name = "pokemonCreate.html"
     form_class = PokemonFrom
     success_url = reverse_lazy('pokemonList')
+    login_url = "/signin/"
+    redirect_field_name = "redirect_to"
 
     def form_valid(self, form):
         print("Form Valido")
@@ -134,59 +131,6 @@ class PokemonCreate(CreateView):
         print(form.errors)
 
         return super(PokemonCreate,self).form_invalid(form)    
-
-# @login_required
-# def pokemonCreate(request):
-#     if request.method == 'GET':
-#         return render(request,'pokemonCreate.html',{
-#             'form':PokemonFrom
-#         })
-#     else:
-#         # try:
-#         post = request.POST
-#         pokemon = Pokemon(user=request.user)
-        
-#         form = PokemonFrom(post,request.FILES, instance=pokemon)
-        
-#         if form.is_valid():
-#             pokemon = form.save(commit=False)
-#             pokemon.full_clean()
-#             pokemon.save()
-#             pokemon.category.set(post.getlist('category'))            
-            
-#             return render(request,'pokemonCreate.html',{
-#                 'form':PokemonFrom,
-#                 "message":{
-#                     "title":"Nuvo pokemon consegido",
-#                     "text":"{} ha sido agregado a la colección". format(pokemon.name),
-#                     "icon":"success",
-#                     "confirmButtonText":"Ok"
-#                 }
-#             })
-#         else:
-#             if "__all__" in form.errors:
-#                 print(True)
-#                 return render(request,'pokemonCreate.html',{
-#                     'form': PokemonFrom(),
-#                     "message":{
-#                         "title":"Pokemon no capturado",
-#                         "text":"Ya tienes el pokemon en tu coleccion" ,
-#                         "icon":"error",
-#                         "confirmButtonText":"Ok"
-#                     }
-#                 })
-
-#             return render(request,'pokemonCreate.html',{
-#                 'form':form
-#             })
-#         # except ValidationError as e:
-#         #     print('exepcion')
-#         #     return render(request,'pokemonCreate.html',{
-#         #         'form':form,
-#         #         'error':e.message_dict
-#         #     })
-    
-        
     
 
 def pokemonGet(request):
