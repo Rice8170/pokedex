@@ -29,6 +29,11 @@ class PokemonFrom(forms.ModelForm):
 
     def clean_name(self):
         name = self.cleaned_data.get('name')
+        pokemon = Pokemon.objects.filter(name=name)
+
+        if pokemon.exists():
+            print(pokemon.exists())
+            raise ValidationError('Pokemon ya ha sido capturado')
 
         if not (name and name.isalpha()) :
             raise forms.ValidationError('El nombre debe ser alfabetico')

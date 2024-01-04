@@ -6,7 +6,7 @@ from django.urls import reverse_lazy
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -14,7 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist,ValidationError
 from django.db import IntegrityError
 from django.views.generic import ListView
 from django import forms
-from django.views.generic.edit import FormView, CreateView
+from django.views.generic.edit import FormView, CreateView, UpdateView,DeleteView
 from .forms import PokemonFrom
 from .models import Pokemon, PokemonCategory
 import json
@@ -24,20 +24,20 @@ import json
 class Index(ListView):
     model = Pokemon
     template_name = 'index.html'
-    queryset = Pokemon.objects.filter(softDelete=0)
+
+    def get_queryset(self):
+        print( type(self.request.user))
+        if self.request.user.is_anonymous:
+            return Pokemon.objects.filter(softDelete=0)
+        else:
+            return Pokemon.objects.filter(softDelete=0, user=self.request.user)
 
  
 
 class Signin(LoginView):
     template_name = "signin.html"
     form_class = AuthenticationForm
-    
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            return self.get_success_url()
-        else:
-            return super(Signin,self).dispatch(request, *args, **kwargs)
+    redirect_authenticated_user = True
     
     def get_redirect_url(self) -> str:
         
@@ -95,10 +95,15 @@ class Signup(CreateView):
         return super(Signup,self).form_valid(form)
     
 
+
+
 @login_required
 def signout(request):
     logout(request)
     return redirect('index')
+
+
+
 
 @login_required
 def pokemonList(request):
@@ -113,9 +118,7 @@ class PokemonCreate(LoginRequiredMixin, CreateView):
     template_name = "pokemonCreate.html"
     form_class = PokemonFrom
     success_url = reverse_lazy('pokemonList')
-    login_url = "/signin/"
-    redirect_field_name = "redirect_to"
-
+   
     def form_valid(self, form):
         print("Form Valido")
         print(self.request.user)
@@ -139,55 +142,42 @@ def pokemonGet(request):
         'pokemons':pokemons
     })
 
-@login_required
-def pokemonEdit(request, pokemonId):
+
+class PokemonEdit(LoginRequiredMixin, UpdateView):
+    model = Pokemon
+    form_class = PokemonFrom
+    template_name = "pokemonDetail.html"
     
-    try:
+    def get_success_url(self):
+        pk = self.kwargs.get(self.pk_url_kwarg)
+        return reverse_lazy("pokemonDetail", args=[pk])
+    
+    # def form_valid(self, form):
+
+    #     self.object = form.save()
+    #     self.object.category.set(self.request.POST.getlist('category'))
+    #     return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        print(form.errors)
+        return super().form_invalid(form)
        
-        pokemon = Pokemon.objects.filter(user=request.user, softDelete=0).prefetch_related('category').get(id=pokemonId)
-        
-        if request.method == 'GET':
-            form = PokemonFrom(instance=pokemon)
-            return render(request, 'pokemonEdit.html',{'form':form})
-        else:
-            
-            form = PokemonFrom(request.POST, request.FILES, instance=pokemon)
-           
-            if form.has_changed:
-                
-                print('forr with changes')
-                
-                    # if fieldName == 'category':
-                    #     pokemon[fieldName].set(request.POST.getlist(fieldName))
 
-                form.save()
+class PokemonDelete(LoginRequiredMixin, DeleteView):
+    model = Pokemon
+    template_name = ""
+    
+    def get_success_url(self):
+        return reverse_lazy("pokemonList")
 
-                pokemon.save(force_update=True)
-                messages.add_message(request, level=messages.SUCCESS, message="Pokemon actualizado")
-                return redirect('pokemonList')
-           
-            postCaregories = request.POST.getlist('category')
-            pokemon.category.set(postCaregories)  
-         
-            return redirect('pokemonDetail', pokemonId)
-    except ObjectDoesNotExist:
-        messages.add_message(request,level=messages.ERROR, message="Pokemon no encontrado")
-        return redirect('pokemonDetail', pokemonId)
+    def post(self, request, pk , *args, **kwargs):
+        object = Pokemon.objects.get(id=pk)
+        object.softDelete = 1
+        object.save()
 
-@login_required
-def pokemonDelete(request, pokemonId):
+        messages.success(self.request,"El pokemon fue enviado con el doctor Oak")
 
-    try:
-        pokemon = Pokemon.objects.filter(user=request.user, softDelete=0).get(id=pokemonId)
-        pokemon.softDelete = 1
-        pokemon.save()
-        # messages.add_message(request,level=messages.SUCCESS, message="Pokemin eliminado")
-        
-        messages.success(request,"El pokemon fue enviado con el doctor Oak")
-        return redirect('pokemonList')
-    except ObjectDoesNotExist:
-        messages.add_message(request,level=messages.ERROR, message="El pokemon no se puede eliminar")
-        return redirect('pokemonDetail', pokemonId)
+        return redirect(self.get_success_url())
 
 
 @login_required

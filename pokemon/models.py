@@ -39,13 +39,13 @@ class Pokemon(models.Model):
     softDelete = models.BooleanField(default=0)
     pokemonImage = models.ImageField(upload_to="PokemonImages",null=True, blank=True, verbose_name="Imagén")
 
-    def clean(self):
-        name = self.name
+    # def clean(self):
+    #     name = self.name
 
-        pokemon = Pokemon.objects.filter(name=name)
-        if pokemon.exists():
-            print(pokemon.exists())
-            raise ValidationError('Pokemon ya ha sido capturado')
+    #     pokemon = Pokemon.objects.filter(name=name)
+    #     if pokemon.exists():
+    #         print(pokemon.exists())
+    #         raise ValidationError('Pokemon ya ha sido capturado')
        
     def __str__(self):
         return self.name + '- by ' + self.user.username
