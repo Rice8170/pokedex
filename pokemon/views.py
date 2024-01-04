@@ -1,4 +1,5 @@
 from typing import Any
+from django.db.models.query import QuerySet
 from django.forms.models import BaseModelForm
 from django.http import HttpRequest, HttpResponse, HttpResponse as HttpResponse
 from django.shortcuts import render,HttpResponse, redirect
@@ -13,6 +14,7 @@ from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist,ValidationError
 from django.db import IntegrityError
 from django.views.generic import ListView
+from django.views.generic.detail import DetailView
 from django import forms
 from django.views.generic.edit import FormView, CreateView, UpdateView,DeleteView
 from .forms import PokemonFrom
@@ -32,7 +34,6 @@ class Index(ListView):
         else:
             return Pokemon.objects.filter(softDelete=0, user=self.request.user)
 
- 
 
 class Signin(LoginView):
     template_name = "signin.html"
@@ -61,7 +62,6 @@ class Signin(LoginView):
         login(self.request,user)
         return super().form_valid(form)
     
-
 
 class Signup(CreateView):
     template_name = "signup.html"
@@ -95,14 +95,10 @@ class Signup(CreateView):
         return super(Signup,self).form_valid(form)
     
 
-
-
 @login_required
 def signout(request):
     logout(request)
     return redirect('index')
-
-
 
 
 @login_required
@@ -142,6 +138,23 @@ def pokemonGet(request):
         'pokemons':pokemons
     })
 
+class PokemonDetail(DetailView):
+    model = Pokemon
+    template_name = "pokemonDetail.html"
+    pk_url_kwarg = "pokemonId"
+
+    def get_context_data(self, **kwargs):
+
+        pk = self.kwargs.get(self.pk_url_kwarg)
+        pokemon = self.model.objects.filter(user=self.request.user, softDelete=0).get(id=pk)
+        print(pokemon)
+        form = PokemonFrom(instance=pokemon)
+        context = super(PokemonDetail, self).get_context_data(**kwargs)
+        context['form'] = form
+        return context
+
+    def get_queryset(self):
+        return self.model.objects.filter(user=self.request.user, softDelete=0)
 
 class PokemonEdit(LoginRequiredMixin, UpdateView):
     model = Pokemon
@@ -150,7 +163,10 @@ class PokemonEdit(LoginRequiredMixin, UpdateView):
     
     def get_success_url(self):
         pk = self.kwargs.get(self.pk_url_kwarg)
+        messages.success(self.request, "Pokemon actualizado")
         return reverse_lazy("pokemonDetail", args=[pk])
+    
+    
     
     # def form_valid(self, form):
 
@@ -178,6 +194,7 @@ class PokemonDelete(LoginRequiredMixin, DeleteView):
         messages.success(self.request,"El pokemon fue enviado con el doctor Oak")
 
         return redirect(self.get_success_url())
+
 
 
 @login_required
