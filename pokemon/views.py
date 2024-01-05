@@ -1,5 +1,7 @@
 from typing import Any
 from django.db.models.query import QuerySet
+from django.db.models import Q
+
 from django.forms.models import BaseModelForm
 from django.http import HttpRequest, HttpResponse, HttpResponse as HttpResponse
 from django.shortcuts import render,HttpResponse, redirect
@@ -12,11 +14,16 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist,ValidationError
+from django.core import serializers
 from django.db import IntegrityError
+from django.http import JsonResponse
 from django.views.generic import ListView
-from django.views.generic.detail import DetailView
+from django.utils import timezone 
+from django.views.generic.base import TemplateView
+from django.views.generic.detail import DetailView,SingleObjectMixin
 from django import forms
 from django.views.generic.edit import FormView, CreateView, UpdateView,DeleteView
+from datetime import datetime
 from .forms import PokemonFrom
 from .models import Pokemon, PokemonCategory
 import json
@@ -109,6 +116,77 @@ def pokemonList(request):
         'pokemons':pokemons,  
     })
 
+class PokemonList(TemplateView):
+    template_name = 'pokemonList.html'
+
+class PokemonGet(ListView):
+    model = Pokemon
+
+    def get_queryset(self, lenght, start, search):
+
+        print(search)
+
+        count = self.model.objects.filter(user=self.request.user,softDelete=0).prefetch_related('category').count()
+
+        resutl = self.model.objects.filter(
+            Q(user=self.request.user,softDelete=0), 
+            Q(name__contains=search)|
+            Q( height__contains=search)|
+            Q(weight__contains=search)|
+            Q(dateCapture__contains=search)
+        ).prefetch_related('category')
+       
+        
+        print(resutl)
+        querySet = {
+            'recordsTotal': count,
+            'recordsFiltered': len(resutl[int(start):int(lenght)])
+        }
+       
+        pokemons = []
+
+        for pokemon in resutl:
+
+            pokemons.append({
+                'id':pokemon.id,
+                'name':pokemon.name,
+                'category': [],
+                'weight':pokemon.weight,
+                'height':pokemon.height,
+                'color':pokemon.get_color_display(),
+                'dateCapture': pokemon.dateCapture.strftime('%A/%m/%Y %I:%M %p')
+            })
+
+            for category in pokemon.category.all():
+                pokemons[-1]['category'].append(category.name)
+                
+
+        querySet['data'] = pokemons
+        print(querySet)
+        return querySet
+    
+    
+
+    def post(self, request, *args, **kwargs):
+        
+        draw = request.POST.get('draw')
+        start = request.POST.get('start')
+        length = request.POST.get('length')
+        search = request.POST.get('search[value]')
+     
+
+        querySet  = self.get_queryset(lenght=length, start=start, search=search)
+
+        return JsonResponse({
+            'draw':draw,
+            'recordsTotal':querySet['recordsTotal'],
+            'recordsFiltered':querySet['recordsFiltered'],
+            'data': querySet['data']
+        })
+
+
+    
+    
 
 class PokemonCreate(LoginRequiredMixin, CreateView):
     template_name = "pokemonCreate.html"
@@ -130,6 +208,7 @@ class PokemonCreate(LoginRequiredMixin, CreateView):
         print(form.errors)
 
         return super(PokemonCreate,self).form_invalid(form)    
+    
     
 
 def pokemonGet(request):
@@ -155,6 +234,7 @@ class PokemonDetail(DetailView):
 
     def get_queryset(self):
         return self.model.objects.filter(user=self.request.user, softDelete=0)
+    
 
 class PokemonEdit(LoginRequiredMixin, UpdateView):
     model = Pokemon
@@ -165,7 +245,6 @@ class PokemonEdit(LoginRequiredMixin, UpdateView):
         pk = self.kwargs.get(self.pk_url_kwarg)
         messages.success(self.request, "Pokemon actualizado")
         return reverse_lazy("pokemonDetail", args=[pk])
-    
     
     
     # def form_valid(self, form):
@@ -196,16 +275,3 @@ class PokemonDelete(LoginRequiredMixin, DeleteView):
         return redirect(self.get_success_url())
 
 
-
-@login_required
-def pokemonDetail(request, pokemonId):
-    try:
-        pokemon = Pokemon.objects.filter(user=request.user,softDelete=0).get(id=pokemonId)
-        form = PokemonFrom(instance=pokemon)
-        return render(request, 'pokemonDetail.html',{
-            'pokemon': pokemon,
-            'form':form
-        })
-    except ObjectDoesNotExist:
-        messages.add_message(request, level=messages.ERROR, message="Pokemon no encontrado")
-        return redirect('pokemonList')
