@@ -19,13 +19,17 @@ $(document).ready(function () {
   
 
     $('#tabPokemonList').DataTable({
+        lengthMenu: [5,10,20,50,-1],
+        columnDefs:[
+            {orderable:false, targets:6}
+        ],
         language: {
             processing:     "Traitement en cours...",
             search:         "Buscar&nbsp;:",
             lengthMenu:     "Mostrando _MENU_ registros",
             info:           "Mostrando de  _START_ a _END_ de _TOTAL_ registros",
             infoEmpty:      "No hay registros",
-            infoFiltered:   "(filtrado de un tottal de _MAX_ registros)",
+            infoFiltered:   "(filtrado de un total de _MAX_ registros)",
             loadingRecords: "Chargement en cours...",
             zeroRecords:    "Aucun &eacute;l&eacute;ment &agrave; afficher",
             emptyTable:     "No hay registros para mostrar",
@@ -37,6 +41,7 @@ $(document).ready(function () {
             }
         },
         serverSide: true,
+        paging: true,
         ajax: {
             url: 'http://127.0.0.1:8000/pokemon/get/',
             type: 'post',

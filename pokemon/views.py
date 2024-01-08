@@ -73,7 +73,7 @@ class Signin(LoginView):
 class Signup(CreateView):
     template_name = "signup.html"
     form_class = UserCreationForm
-    success_url = reverse_lazy()
+    success_url = reverse_lazy('signin')
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -95,10 +95,11 @@ class Signup(CreateView):
         
 
     def form_valid(self, form):
+        
         print("Form Valido")
-        self.object = form.save()
-        print(self.object)
-        login(self.request, self.object)
+        user = form.save()
+        
+        
         return super(Signup,self).form_valid(form)
     
 
@@ -116,36 +117,48 @@ def pokemonList(request):
         'pokemons':pokemons,  
     })
 
-class PokemonList(TemplateView):
+class PokemonList(LoginRequiredMixin,TemplateView):
     template_name = 'pokemonList.html'
 
-class PokemonGet(ListView):
+class PokemonGet(LoginRequiredMixin,ListView):
     model = Pokemon
 
-    def get_queryset(self, lenght, start, search):
+    def get_queryset(self, lenght, start, search, columnName, dir):
 
-        print(search)
-
-        count = self.model.objects.filter(user=self.request.user,softDelete=0).prefetch_related('category').count()
-
-        resutl = self.model.objects.filter(
-            Q(user=self.request.user,softDelete=0), 
-            Q(name__contains=search)|
-            Q( height__contains=search)|
-            Q(weight__contains=search)|
-            Q(dateCapture__contains=search)
-        ).prefetch_related('category')
-       
-        
-        print(resutl)
         querySet = {
-            'recordsTotal': count,
-            'recordsFiltered': len(resutl[int(start):int(lenght)])
+            'recordsTotal': None,
+            'recordsFiltered' : None
         }
+        result = self.model.objects.filter(user=self.request.user,softDelete=0).prefetch_related('category').all()
+
+        querySet['recordsTotal'] = result.count()
+        print(search)
+        if search:
+            print("Haciendo Filtros")
+            resultwithfilters = result.filter(
+                Q(name__contains=search)|
+                Q( height__contains=search)|
+                Q(weight__contains=search)|
+                Q(dateCapture__contains=search)
+            )
+        else:
+            print("Sin filtros") 
+            resultwithfilters = result
+
+        if dir == "asc":
+            resultwithfilters = resultwithfilters.order_by(columnName)
+        else:
+            resultwithfilters = resultwithfilters.order_by('-{}'.format(columnName))   
+        
+        querySet['recordsFiltered'] = resultwithfilters.count()
+        
+        resultwithfilters = resultwithfilters[int(start):int(lenght)+int(start)]
+
+       
        
         pokemons = []
 
-        for pokemon in resutl:
+        for pokemon in resultwithfilters:
 
             pokemons.append({
                 'id':pokemon.id,
@@ -162,7 +175,7 @@ class PokemonGet(ListView):
                 
 
         querySet['data'] = pokemons
-        print(querySet)
+       
         return querySet
     
     
@@ -173,9 +186,14 @@ class PokemonGet(ListView):
         start = request.POST.get('start')
         length = request.POST.get('length')
         search = request.POST.get('search[value]')
-     
+        order = request.POST.get('order[0][column]')
+        columnName = request.POST.get('columns[{}][data]'.format(order))
+        dir = request.POST.get('order[0][dir]')
 
-        querySet  = self.get_queryset(lenght=length, start=start, search=search)
+        
+        querySet  = self.get_queryset(lenght=length, start=start, search=search, columnName=columnName, dir=dir)
+
+        print(querySet)
 
         return JsonResponse({
             'draw':draw,

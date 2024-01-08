@@ -1,6 +1,6 @@
 media
-pokemon/__pycache__
-pokemon/migrations/__pycache__
+__pycache__
+__pycache__
 venv
 
 db.sqlite3
