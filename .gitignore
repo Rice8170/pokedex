@@ -1,6 +1,6 @@
 media
 __pycache__
-
+pokemon/__pycache__/
 venv
 
 db.sqlite3

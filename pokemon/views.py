@@ -1,32 +1,22 @@
-from typing import Any
-from django.db.models.query import QuerySet
+
 from django.db.models import Q
 
-from django.forms.models import BaseModelForm
-from django.http import HttpRequest, HttpResponse, HttpResponse as HttpResponse
-from django.shortcuts import render,HttpResponse, redirect
+from django.http import HttpResponse, HttpResponse as HttpResponse
+from django.shortcuts import HttpResponse, redirect
 from django.urls import reverse_lazy
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.core.exceptions import ObjectDoesNotExist,ValidationError
-from django.core import serializers
-from django.db import IntegrityError
 from django.http import JsonResponse
 from django.views.generic import ListView
-from django.utils import timezone 
 from django.views.generic.base import TemplateView
-from django.views.generic.detail import DetailView,SingleObjectMixin
-from django import forms
-from django.views.generic.edit import FormView, CreateView, UpdateView,DeleteView
-from datetime import datetime
+from django.views.generic.detail import DetailView
+from django.views.generic.edit import CreateView, UpdateView,DeleteView
 from .forms import PokemonFrom, UserCreateForm, AuthFrom
-from .models import Pokemon, PokemonCategory
-import json
+from .models import Pokemon
+
 
 # Create your views here.
 
