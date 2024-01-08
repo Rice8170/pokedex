@@ -1,7 +1,34 @@
 
 from django import forms
-from .models import Pokemon, PokemonCategory
 from django.core.exceptions import ValidationError
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.models import User
+from .models import Pokemon, PokemonCategory
+
+class UserCreateForm(UserCreationForm):
+    password1 = forms.CharField(label="Contraseña", widget=forms.PasswordInput(attrs={
+        'class':'form-control',
+        'placeholder':'Ingresa contraseña'
+    }))
+    password2 = forms.CharField(label="Confirmar Contraseña", widget=forms.PasswordInput(attrs={
+        'class':'form-control',
+        'placeholder':'Repite la contraseña'
+    }))
+
+    class Meta:
+        model = User
+        fields = [
+            'username',
+        ]
+        widgets={
+            'username': forms.TextInput(attrs={'class':'form-control', 'placeholder':'Ingresa Usuario'}),
+           
+        }
+
+        lables={
+            'username': 'Usuario',
+        }
+    
 
 class PokemonFrom(forms.ModelForm):
     category:forms.ModelMultipleChoiceField(queryset=PokemonCategory.objects.all())
@@ -38,6 +65,8 @@ class PokemonFrom(forms.ModelForm):
         if not (name and name.isalpha()) :
             raise forms.ValidationError('El nombre debe ser alfabetico')
         return name
+    
+    
     
  
     

@@ -24,7 +24,7 @@ from django.views.generic.detail import DetailView,SingleObjectMixin
 from django import forms
 from django.views.generic.edit import FormView, CreateView, UpdateView,DeleteView
 from datetime import datetime
-from .forms import PokemonFrom
+from .forms import PokemonFrom, UserCreateForm
 from .models import Pokemon, PokemonCategory
 import json
 
@@ -72,7 +72,7 @@ class Signin(LoginView):
 
 class Signup(CreateView):
     template_name = "signup.html"
-    form_class = UserCreationForm
+    form_class = UserCreateForm
     success_url = reverse_lazy('signin')
 
     def dispatch(self, request, *args, **kwargs):
@@ -81,17 +81,17 @@ class Signup(CreateView):
         else:
             return super(Signup,self).dispatch(request, *args, **kwargs)
     
-    def get_form(self, form_class=None):
-        form = super(Signup, self).get_form()
+    # def get_form(self, form_class=None):
+    #     form = super(Signup, self).get_form()
 
-        form.fields['username'].widget = forms.TextInput(attrs={'class':'form-control', 'placeholder':'Ingresa usuario'})
-        form.fields['password1'].widget = forms.PasswordInput(attrs={'class':'form-control', 'placeholder':'Ingresa contraseña'})
-        form.fields['password2'].widget = forms.PasswordInput(attrs={'class':'form-control', 'placeholder':'Confrima contraseña'})
+    #     form.fields['username'].widget = forms.TextInput(attrs={'class':'form-control', 'placeholder':'Ingresa usuario'})
+    #     form.fields['password1'].widget = forms.PasswordInput(attrs={'class':'form-control', 'placeholder':'Ingresa contraseña'})
+    #     form.fields['password2'].widget = forms.PasswordInput(attrs={'class':'form-control', 'placeholder':'Confrima contraseña'})
 
-        form.fields['username'].label = 'Usuario'
-        form.fields['password1'].label = 'Contraseña'
-        form.fields['password2'].label = 'Confirma Contrasña'
-        return form
+    #     form.fields['username'].label = 'Usuario'
+    #     form.fields['password1'].label = 'Contraseña'
+    #     form.fields['password2'].label = 'Confirma Contrasña'
+    #     return form
         
 
     def form_valid(self, form):
