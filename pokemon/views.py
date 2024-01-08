@@ -6,7 +6,7 @@ from django.forms.models import BaseModelForm
 from django.http import HttpRequest, HttpResponse, HttpResponse as HttpResponse
 from django.shortcuts import render,HttpResponse, redirect
 from django.urls import reverse_lazy
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.views import LoginView, LogoutView
@@ -24,7 +24,7 @@ from django.views.generic.detail import DetailView,SingleObjectMixin
 from django import forms
 from django.views.generic.edit import FormView, CreateView, UpdateView,DeleteView
 from datetime import datetime
-from .forms import PokemonFrom, UserCreateForm
+from .forms import PokemonFrom, UserCreateForm, AuthFrom
 from .models import Pokemon, PokemonCategory
 import json
 
@@ -44,22 +44,13 @@ class Index(ListView):
 
 class Signin(LoginView):
     template_name = "signin.html"
-    form_class = AuthenticationForm
+    form_class = AuthFrom
     redirect_authenticated_user = True
     
     def get_redirect_url(self) -> str:
         
         return reverse_lazy('pokemonList')
     
-    def get_form(self, form_class=None):
-        form = super(Signin, self).get_form()
-
-        form.fields['username'].widget = forms.TextInput(attrs={'class':'form-control', 'placeholder':'Ingresa usuario'})
-        form.fields['password'].widget = forms.PasswordInput(attrs={'class':'form-control', 'placeholder':'Ingresa contraseña'})
-    
-        form.fields['username'].label = 'Usuario'
-        form.fields['password'].label = 'Contraseña'
-        return form
     
     def form_valid(self, form):
         print(self.request.get_full_path)
@@ -81,24 +72,13 @@ class Signup(CreateView):
         else:
             return super(Signup,self).dispatch(request, *args, **kwargs)
     
-    # def get_form(self, form_class=None):
-    #     form = super(Signup, self).get_form()
-
-    #     form.fields['username'].widget = forms.TextInput(attrs={'class':'form-control', 'placeholder':'Ingresa usuario'})
-    #     form.fields['password1'].widget = forms.PasswordInput(attrs={'class':'form-control', 'placeholder':'Ingresa contraseña'})
-    #     form.fields['password2'].widget = forms.PasswordInput(attrs={'class':'form-control', 'placeholder':'Confrima contraseña'})
-
-    #     form.fields['username'].label = 'Usuario'
-    #     form.fields['password1'].label = 'Contraseña'
-    #     form.fields['password2'].label = 'Confirma Contrasña'
-    #     return form
         
 
     def form_valid(self, form):
         
         print("Form Valido")
         user = form.save()
-        
+        print(user)
         
         return super(Signup,self).form_valid(form)
     
@@ -108,14 +88,6 @@ def signout(request):
     logout(request)
     return redirect('index')
 
-
-@login_required
-def pokemonList(request):
-    pokemons = Pokemon.objects.filter(user=request.user, softDelete=0)
-    
-    return render(request,'pokemonList.html',{
-        'pokemons':pokemons,  
-    })
 
 class PokemonList(LoginRequiredMixin,TemplateView):
     template_name = 'pokemonList.html'
@@ -178,8 +150,6 @@ class PokemonGet(LoginRequiredMixin,ListView):
        
         return querySet
     
-    
-
     def post(self, request, *args, **kwargs):
         
         draw = request.POST.get('draw')
@@ -203,9 +173,6 @@ class PokemonGet(LoginRequiredMixin,ListView):
         })
 
 
-    
-    
-
 class PokemonCreate(LoginRequiredMixin, CreateView):
     template_name = "pokemonCreate.html"
     form_class = PokemonFrom
@@ -224,14 +191,7 @@ class PokemonCreate(LoginRequiredMixin, CreateView):
         print(form.errors)
 
         return super(PokemonCreate,self).form_invalid(form)    
-    
-    
-
-def pokemonGet(request):
-    pokemons = Pokemon.objects.filter(user=request.user, softDelete=0)
-    return render(request,'pokemonList.html',{
-        'pokemons':pokemons
-    })
+      
 
 class PokemonDetail(DetailView):
     model = Pokemon

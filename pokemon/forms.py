@@ -30,6 +30,17 @@ class UserCreateForm(UserCreationForm):
         }
     
 
+class AuthFrom(AuthenticationForm):
+    username = forms.CharField(label="Usuario", widget=forms.TextInput(attrs={
+        'class':'form-control',
+        'placeholder':'Ingresa usuario'
+    }))
+
+    password = forms.CharField(label='Contraseña',widget=forms.PasswordInput(attrs={
+        'class':'form-control',
+        'placeholder':'Ingresa contraseña'
+    }))
+
 class PokemonFrom(forms.ModelForm):
     category:forms.ModelMultipleChoiceField(queryset=PokemonCategory.objects.all())
     class Meta:
@@ -66,11 +77,6 @@ class PokemonFrom(forms.ModelForm):
             raise forms.ValidationError('El nombre debe ser alfabetico')
         return name
     
-    
-    
- 
-    
-        
 
 
 class PokemonCaregoryFrom(forms.ModelForm):
