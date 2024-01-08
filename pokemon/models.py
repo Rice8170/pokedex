@@ -20,7 +20,7 @@ class PokemonCategory(models.Model):
 class Pokemon(models.Model):
 
     
-    name = models.CharField(max_length=100,blank=False, verbose_name="Nombre")
+    name = models.CharField(max_length=100,blank=False, verbose_name="Nombre", unique=True)
     category = models.ManyToManyField(PokemonCategory, verbose_name="Tipo")
     weight = models.FloatField(verbose_name="Peso")
     height = models.FloatField(verbose_name="Altura")

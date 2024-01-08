@@ -212,8 +212,6 @@ class PokemonCreate(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('pokemonList')
    
     def form_valid(self, form):
-        print("Form Valido")
-        print(self.request.user)
         form.instance.user = self.request.user
         self.object = form.save()
         
