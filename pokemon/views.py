@@ -101,11 +101,12 @@ class PokemonGet(LoginRequiredMixin,ListView):
             resultwithfilters = result.filter(
                 Q(name__contains=search)|
                 Q(height__contains=search)|
+                Q(category__name__contains=search)|
                 Q(weight__contains=search)|
                 Q(dateCapture__contains=search)
             )
         else:
-            print("Sin filtros") 
+
             resultwithfilters = result
 
         if dir == "asc":
@@ -151,8 +152,6 @@ class PokemonGet(LoginRequiredMixin,ListView):
 
         
         querySet  = self.get_queryset(lenght=length, start=start, search=search, columnName=columnName, dir=dir)
-
-        print(querySet)
 
         return JsonResponse({
             'draw':draw,

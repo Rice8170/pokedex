@@ -3,6 +3,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
+from django.db.models import Q
 from .models import Pokemon, PokemonCategory
 
 class UserCreateForm(UserCreationForm):
@@ -70,13 +71,21 @@ class PokemonFrom(forms.ModelForm):
 
     def clean(self):
         name = self.cleaned_data.get('name')
-        category = self.cleaned_data.get('category')
-        print(category)
+        color = self.cleaned_data.get('color')
+       
         
-        pokemon = Pokemon.objects.prefetch_related('category').filter(softDelete=True,category__in=category,name=name) #Pokemon.objects.filter(name=name)
-        if pokemon.exists():
-            print(pokemon.exists())
-            raise ValidationError('Pokemon ya ha sido capturado')
+        print("->", self.instance)
+        if self.instance:
+            print(self.changed_data)
+            if 'name' in self.changed_data or 'color' in self.changed_data:
+                if Pokemon.objects.prefetch_related('category').filter(name=name,color=color).exists():
+                    raise ValidationError('Pokemon ya ha sido capturado')
+        else:
+            
+
+            if Pokemon.objects.prefetch_related('category').filter(Q(name=name)|Q(name=name,color=color)).exists():
+                
+                raise ValidationError('Pokemon ya ha sido capturado')
 
     def clean_name(self):
         name = self.cleaned_data.get('name')

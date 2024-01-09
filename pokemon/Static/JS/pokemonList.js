@@ -22,7 +22,7 @@ $(document).ready(function () {
         lengthMenu: [5,10,20,50,-1],
         columnDefs:[
             {orderable:false, targets:6},
-            {searchable: false, targets: [1,6] }
+            
         ],
         language: {
             processing:     "Traitement en cours...",
