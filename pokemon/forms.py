@@ -62,8 +62,21 @@ class PokemonFrom(forms.ModelForm):
             'height':forms.NumberInput(attrs={'class':'form-control'}),
             'pokemonImage': forms.ClearableFileInput(attrs={'class':'form-control', 'placeholder':'URL de imagen'}),
         }
+        error_messages = {
+            "name": {
+                "unique": "Este pokemon ya esta capturado"
+            }
+        }
 
-    
+    def clean(self):
+        name = self.cleaned_data.get('name')
+        category = self.cleaned_data.get('category')
+        print(category)
+        
+        pokemon = Pokemon.objects.prefetch_related('category').filter(softDelete=True,category__in=category,name=name) #Pokemon.objects.filter(name=name)
+        if pokemon.exists():
+            print(pokemon.exists())
+            raise ValidationError('Pokemon ya ha sido capturado')
 
     def clean_name(self):
         name = self.cleaned_data.get('name')

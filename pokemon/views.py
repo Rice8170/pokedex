@@ -27,9 +27,9 @@ class Index(ListView):
     def get_queryset(self):
         print( type(self.request.user))
         if self.request.user.is_anonymous:
-            return Pokemon.objects.filter(softDelete=0)
+            return Pokemon.objects.filter(softDelete=True)
         else:
-            return Pokemon.objects.filter(softDelete=0, user=self.request.user)
+            return Pokemon.objects.filter(softDelete=True, user=self.request.user)
 
 
 class Signin(LoginView):
@@ -91,15 +91,16 @@ class PokemonGet(LoginRequiredMixin,ListView):
             'recordsTotal': None,
             'recordsFiltered' : None
         }
-        result = self.model.objects.filter(user=self.request.user,softDelete=0).prefetch_related('category').all()
+        result = self.model.objects.filter(user=self.request.user,softDelete=True).prefetch_related('category').all()
 
         querySet['recordsTotal'] = result.count()
+        
         print(search)
         if search:
             print("Haciendo Filtros")
             resultwithfilters = result.filter(
                 Q(name__contains=search)|
-                Q( height__contains=search)|
+                Q(height__contains=search)|
                 Q(weight__contains=search)|
                 Q(dateCapture__contains=search)
             )
@@ -116,8 +117,6 @@ class PokemonGet(LoginRequiredMixin,ListView):
         
         resultwithfilters = resultwithfilters[int(start):int(lenght)+int(start)]
 
-       
-       
         pokemons = []
 
         for pokemon in resultwithfilters:
@@ -129,7 +128,7 @@ class PokemonGet(LoginRequiredMixin,ListView):
                 'weight':pokemon.weight,
                 'height':pokemon.height,
                 'color':pokemon.get_color_display(),
-                'dateCapture': pokemon.dateCapture.strftime('%A/%m/%Y %I:%M %p')
+                'dateCapture': pokemon.dateCapture.strftime('%d/%B/%Y %H:%M')
             })
 
             for category in pokemon.category.all():
@@ -191,7 +190,7 @@ class PokemonDetail(DetailView):
     def get_context_data(self, **kwargs):
 
         pk = self.kwargs.get(self.pk_url_kwarg)
-        pokemon = self.model.objects.filter(user=self.request.user, softDelete=0).get(id=pk)
+        pokemon = self.model.objects.filter(user=self.request.user, softDelete=True).get(id=pk)
         print(pokemon)
         form = PokemonFrom(instance=pokemon)
         context = super(PokemonDetail, self).get_context_data(**kwargs)
@@ -199,7 +198,7 @@ class PokemonDetail(DetailView):
         return context
 
     def get_queryset(self):
-        return self.model.objects.filter(user=self.request.user, softDelete=0)
+        return self.model.objects.filter(user=self.request.user, softDelete=True)
     
 
 class PokemonEdit(LoginRequiredMixin, UpdateView):
@@ -233,7 +232,7 @@ class PokemonDelete(LoginRequiredMixin, DeleteView):
 
     def post(self, request, pk , *args, **kwargs):
         object = Pokemon.objects.get(id=pk)
-        object.softDelete = 1
+        object.softDelete = False
         object.save()
 
         messages.success(self.request,"El pokemon fue enviado con el doctor Oak")
