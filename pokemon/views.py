@@ -1,4 +1,5 @@
 
+from typing import Any
 from django.db.models import Q
 
 from django.http import HttpResponse, HttpResponse as HttpResponse
@@ -15,7 +16,7 @@ from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView,DeleteView
 from .forms import PokemonFrom, UserCreateForm, AuthFrom
-from .models import Pokemon
+from .models import Pokemon, PokemonCategory
 
 
 # Create your views here.
@@ -81,11 +82,23 @@ def signout(request):
 
 class PokemonList(LoginRequiredMixin,TemplateView):
     template_name = 'pokemonList.html'
+    # model = PokemonCategory
+    # context_object_name = 'categories'
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super(PokemonList, self).get_context_data(**kwargs)
+        context['categories'] = PokemonCategory.objects.all()
+        context['colors'] = Pokemon.COLORS
+       
+        for color in context['colors']:
+            print(color[0])
+        return context
+
 
 class PokemonGet(LoginRequiredMixin,ListView):
     model = Pokemon
 
-    def get_queryset(self, lenght, start, search, columnName, dir):
+    def get_queryset(self, lenght, start, search, columnName, dir, categories, color):
 
         querySet = {
             'recordsTotal': None,
@@ -93,28 +106,32 @@ class PokemonGet(LoginRequiredMixin,ListView):
         }
         result = self.model.objects.filter(user=self.request.user,softDelete=True).prefetch_related('category').all()
 
-        querySet['recordsTotal'] = result.count()
+        querySet['recordsTotal'] = result.count()    
         
-        print(search)
-        if search:
-            print("Haciendo Filtros")
+        if search or color:
+           
             resultwithfilters = result.filter(
                 Q(name__contains=search)|
                 Q(height__contains=search)|
-                Q(category__name__contains=search)|
                 Q(weight__contains=search)|
                 Q(dateCapture__contains=search)
             )
         else:
-
+           
             resultwithfilters = result
 
+        if (categories and categories != '') or color:
+    
+            resultwithfilters = resultwithfilters.filter(Q(category__in=categories) | Q(color=color)).distinct()
+
+        
         if dir == "asc":
             resultwithfilters = resultwithfilters.order_by(columnName)
         else:
-            resultwithfilters = resultwithfilters.order_by('-{}'.format(columnName))   
-        
+            resultwithfilters = resultwithfilters.order_by('-{}'.format(columnName))
+
         querySet['recordsFiltered'] = resultwithfilters.count()
+        
         
         resultwithfilters = resultwithfilters[int(start):int(lenght)+int(start)]
 
@@ -135,7 +152,6 @@ class PokemonGet(LoginRequiredMixin,ListView):
             for category in pokemon.category.all():
                 pokemons[-1]['category'].append(category.name)
                 
-
         querySet['data'] = pokemons
        
         return querySet
@@ -148,10 +164,13 @@ class PokemonGet(LoginRequiredMixin,ListView):
         search = request.POST.get('search[value]')
         order = request.POST.get('order[0][column]')
         columnName = request.POST.get('columns[{}][data]'.format(order))
+        categories = request.POST.getlist('categories[]')
+        color = request.POST.get('color')
+        
         dir = request.POST.get('order[0][dir]')
 
         
-        querySet  = self.get_queryset(lenght=length, start=start, search=search, columnName=columnName, dir=dir)
+        querySet  = self.get_queryset(lenght=length, start=start, search=search, columnName=columnName, dir=dir, categories=categories, color=color)
 
         return JsonResponse({
             'draw':draw,

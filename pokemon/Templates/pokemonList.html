@@ -20,6 +20,47 @@
                 {% endfor %}
             </ul>
         {% endif %}
+        
+        
+
+        <section class="row mt-4 mb-5">
+            <div class="accordion accordion-flush" data-bs-theme="dark" id="accordionExample">
+                <div class="accordion-item ">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            Filtros
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                        <div class="accordion-body">
+                            <!-- <strong>This is the first item's accordion body.</strong> It is shown by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow. -->
+                            <form action="" class="row">
+                                <div class="col-6 ">
+                                    <label for="" class="form-label">Tipo:</label>
+                                    <select class="form-select" id="selCategories" multiple aria-label="Default select example">
+                                        
+                                        {% for category in categories %}
+                                            <option value="{{category.id}}">{{category.name}}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label for="" class="form-label">Color: </label>
+                                    <select name="" id="selColors" class="form-select">
+                                        <option value="">-----Seleccioan color-----</option>
+                                        {% for colorId,colorName in colors %}
+                                            <option value="{{colorId}}">{{colorName}}</option>
+                                        {% endfor %}
+
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </section>
         <table class="table table-dark  table-hover" id="tabPokemonList">
             <thead>
                 <tr>

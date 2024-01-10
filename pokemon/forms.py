@@ -78,12 +78,12 @@ class PokemonFrom(forms.ModelForm):
         if self.instance:
             print(self.changed_data)
             if 'name' in self.changed_data or 'color' in self.changed_data:
-                if Pokemon.objects.prefetch_related('category').filter(name=name,color=color).exists():
+                if Pokemon.objects.prefetch_related('category').filter(name__icontains=name,color=color).exists():
                     raise ValidationError('Pokemon ya ha sido capturado')
         else:
             
 
-            if Pokemon.objects.prefetch_related('category').filter(Q(name=name)|Q(name=name,color=color)).exists():
+            if Pokemon.objects.prefetch_related('category').filter(Q(name__icontains=name)|Q(name__icontains=name,color=color)).exists():
                 
                 raise ValidationError('Pokemon ya ha sido capturado')
 

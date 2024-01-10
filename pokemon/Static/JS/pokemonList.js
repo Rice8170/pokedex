@@ -14,11 +14,27 @@ function getCookie(name) {
     return cookieValue;
 }
 
+let tabPokemons
+let categoriesOptions
+let colorOption
+$('#selCategories').on('input', function (event) {
+    
+    categoriesOptions = [...event.target.selectedOptions].map(option => option.value)
+
+    tabPokemons.draw()
+
+    
+});
+
+$('#selColors').on('input', function (event) {
+    
+    colorOption = event.target.value
+    tabPokemons.draw()
+});
 
 $(document).ready(function () {
   
-
-    $('#tabPokemonList').DataTable({
+    tabPokemons = $('#tabPokemonList').DataTable({
         lengthMenu: [5,10,20,50,-1],
         columnDefs:[
             {orderable:false, targets:6},
@@ -32,7 +48,7 @@ $(document).ready(function () {
             infoEmpty:      "No hay registros",
             infoFiltered:   "(filtrado de un total de _MAX_ registros)",
             loadingRecords: "Chargement en cours...",
-            zeroRecords:    "Aucun &eacute;l&eacute;ment &agrave; afficher",
+            zeroRecords:    "No hay coincidencias",
             emptyTable:     "No hay registros para mostrar",
             paginate: {
                 first:      "Primero",
@@ -46,7 +62,11 @@ $(document).ready(function () {
         ajax: {
             url: 'http://127.0.0.1:8000/pokemon/get/',
             type: 'post',
-            headers: {'X-CSRFToken': getCookie('csrftoken')}
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            data: function(d){
+                d.categories = categoriesOptions
+                d.color = colorOption                
+            }
         },
         columns:[
             {data:'name'},
@@ -58,7 +78,6 @@ $(document).ready(function () {
             {
                 data:'',
                 render: function(data, type, row){
-                    console.log(row.id)
                     
                     return `
                         <a  href="../deteail/${row.id}" class="btn btn-outline-primary">
@@ -74,3 +93,5 @@ $(document).ready(function () {
         ]
     });
 });
+
+
